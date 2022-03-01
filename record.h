@@ -82,4 +82,30 @@ struct record_slot_attribute{
     i64 length;
 };
 
+class record{
+private:
+    struct record_file_header file_header;
+    struct column_meta *column_meta_copy;
+
+    i64 record_length;      //Each record length
+    i64 records_per_page;   //The number of records a single page can contain. 0 for extended page.
+
+    class page_cache *page_cache;
+    class paged_file record_paged_file;
+
+    inline i64 get_next_available_page_no() {return file_header.next_available_page_no;}
+    inline i64 get_next_empty_page_no() {return file_header.next_empty_page_no;}
+    inline void alter_next_empty_page_no() {file_header.next_empty_page_no++;} //TODO: Support deletion and extended page.
+    i64 create_empty_record_page(i64 page_no);
+    i64 find_first_empty_slot(i64 page_no, i64 &slot_no);
+
+public:
+    record(struct page_cache *page_cache) : page_cache(page_cache), column_meta_copy(nullptr) {}
+    i64 create_record(char *file_name, struct column_meta *column_meta, i64 num_of_columns);
+    i64 open_record(char *file_name);
+    i64 close_record();
+    i64 insert_record(struct record_slot_attribute *record, i64 column_num_of_record, i64 &page_no, i64 &slot_no);
+    i64 get_record(struct record_slot_attribute *record, i64 column_num_of_record, i64 page_no, i64 slot_no);
+};
+
 #endif
